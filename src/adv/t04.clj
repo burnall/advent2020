@@ -1,5 +1,4 @@
 (ns adv.t04)
-;(:require [adv.util :refer [split-lines split parse-int]]))
 
 (defn digits [n]
   (->> [n []]
