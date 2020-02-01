@@ -7,17 +7,38 @@
        (#(split % #",|\n"))
        (map parse-int)
        (vec)))
+
+(defn get-param [v pos mode]
+  (let [el (v pos)]
+    (if (zero? mode) 
+      (v el)
+      el)))
+
+(defn get-two-params [v pos modes]
+  [(get-param v (+ pos 1) (mod modes 10))
+   (get-param v (+ pos 2) (quot modes 10))]) 
      
 (defn run-binary-op [v pos oper modes]
-  (let [a (if (zero? (mod modes 10)) 
-            (v (v (+ pos 1)))
-            (v (+ pos 1)))
-        b (if (< modes 10)
-            (v (v (+ pos 2)))
-            (v (+ pos 2)))]
+  (let [[a b] (get-two-params v pos modes)]
     (assoc v 
            (v (+ pos 3))
            (oper a b))))
+
+(defn jump-if [value v pos modes] 
+  (let [a (get-param v (+ pos 1) (mod modes 10))
+        next-pos 
+          (if (= value (not= a 0))
+            (get-param v (+ pos 2) (quot modes 10))
+            (+ pos 3))]
+    (next-iter v next-pos nil)))        
+        
+(defn cond-store [pred v pos modes]
+  (let [[a b] (get-two-params v pos modes)]
+    (next-iter (assoc v 
+                      (v (+ pos 3)) 
+                      (if (pred a b) 1 0))
+               (+ pos 4)
+               nil)))
 
 (defn next-iter [v pos param]
   (let [op (mod (v pos) 100)
@@ -31,9 +52,11 @@
           "no input")
       4 (next-iter v 
                    (+ pos 2) 
-                   (if (zero? modes) 
-                     (v (v (inc pos)))
-                     (v (inc pos))))
+                   (get-param v (inc pos) modes)) 
+      5 (jump-if true v pos modes) 
+      6 (jump-if false v pos modes)
+      7 (cond-store < v pos modes) 
+      8 (cond-store = v pos modes)
       (str "!!!! " op " " v))))
 
 (defn solve 
