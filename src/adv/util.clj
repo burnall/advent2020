@@ -26,4 +26,6 @@
            [[]]
            xs))
 
+(defn zip [& cols]
+  (apply map (fn [& args] (identity args)) cols))
 

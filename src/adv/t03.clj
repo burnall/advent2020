@@ -1,5 +1,5 @@
 (ns adv.t03
-  (:require [adv.util :refer [split-lines split parse-int]]))
+  (:require [adv.util :refer [zip split-lines split parse-int]]))
 
 (defn parse-instruction [s]
   (let [dir (first s)
@@ -77,8 +77,6 @@
        (reductions (fn [distance [a b]]
                      (+ distance (manhattan a b)))
                    0)))
-(defn zip [& cols]
-  (apply map (fn [& args] (identity args)) cols))
 
 (defn route-crossings-with-distance [route-a route-b]
   (let [distances-a (distances route-a)
