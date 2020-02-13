@@ -2,6 +2,8 @@
 
 (defn parse-int [s] (Integer/parseInt s))
 
+(defn parse-long [s] (Long/parseLong s))
+
 (def split clojure.string/split)
 
 (defn split-lines [text]
