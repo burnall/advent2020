@@ -23,7 +23,7 @@
         (< i (count v)) (v i) 
         :else (get mem i 0)))
     ([i value]
-      (println "writing to" i "value" value)
+      ;(println "writing to" i "value" value)
       (cond
         (< i 0) (throw-neg-exception i) 
         (< i (count v)) (storage (assoc v i value) mem)
@@ -68,8 +68,8 @@
 (defn execute [storage pos in-params out-params rel-base]
   (let [op (mod (storage pos) 100)
         modes (quot (storage pos) 100)]
-    (println "[execute] pos:" pos "op:" op "modes" modes 
-             "in-params:" in-params "out-params" out-params "rel-base" rel-base)
+    ;(println "[execute] pos:" pos "op:" op "modes" modes 
+    ;         "in-params:" in-params "out-params" out-params "rel-base" rel-base)
     (condp = op
       99 {:out out-params, :data storage}
       1 (recur (run-binary-op storage pos + modes rel-base) 
@@ -127,7 +127,7 @@
 ;(def input [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99])
 
 (defn solve
-  ([] (solve input (list 1))) 
+  ([] (solve input (list 2))) 
   ([data in-params] 
     (execute (storage data) 0 in-params [] 0)))
 
