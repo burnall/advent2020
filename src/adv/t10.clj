@@ -85,7 +85,6 @@
       (recur v next-idx))))
 
 (defn next-victim [[idx ast-by-angles]]
-  ;(prn idx)
   [(find-next-not-empty-col-index ast-by-angles idx)
    (assoc ast-by-angles idx (rest (ast-by-angles idx)))])
 
@@ -93,7 +92,6 @@
   ([] (solve2 input 199))
   ([data idx]
     (let [ast0 (:p (best-location data))
-          xx (println ast0)
           ast-by-angles 
             (->> data
                  (:asteroids)
@@ -102,10 +100,8 @@
                  (sort)
                  (map second)
                  (mapv (partial sort-by (partial manhattan ast0))))]
-      ;ast-by-angles)))           
       (->> [0 ast-by-angles]
           (iterate next-victim)
            (#(nth % idx))
            ((fn [[current aba]] (first (aba current))))))))
-
 
