@@ -1,5 +1,6 @@
 (ns adv.t11
-  (:require [adv.util :refer [split parse-long]]))
+  (:require [adv.util :refer [split parse-long]])
+  (:require [adv.graph :refer [show]]))
 
 (declare execute)
 
@@ -142,4 +143,20 @@
              (robot {} [0 0] 0 nil) 
              0)))
 
+(defn rect-within [wall]
+  (let [ps (keys wall)]
+    {:xmin (dec (first (apply min-key first ps)))
+     :xmax (inc (first (apply max-key first ps)))
+     :ymin (dec (second (apply min-key second ps)))
+     :ymax (inc (second (apply max-key second ps)))}))
+
+(defn solve2
+  ([] (solve2 input))
+  ([data]
+    (let [wall (execute (storage data) 
+                        0 
+                        (robot {[0 0] 1} [0 0] 0 nil) 
+                        0)
+          bounds (rect-within wall)]
+      (show wall bounds))))    
 
