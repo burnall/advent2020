@@ -1,5 +1,5 @@
 (ns adv.t12
-  (:require [adv.util :refer [split-lines parse-int]]))
+  (:require [adv.util :refer [split-lines parse-int gcd]]))
 
 (defn make-moons [positions]
   (->> positions
@@ -49,10 +49,55 @@
   ([] (solve input 1000))
   ([moons steps] 
     (->> moons
-         ;(iter do-step steps)
          (iterate do-step)
-         ;(take (inc steps))
-         ;(last)
          (#(nth % steps)) 
          (total-energy))))
+
+; Part 2
+
+(defn signum [a b]
+  (cond 
+    (= a b) 0
+    (< a b) 1
+    :else -1))
+
+(defn apply-gravity-1-dim [ps p v]
+  (->> ps
+       (map (partial signum p))
+       (reduce + v)))
+
+(defn iter-until [xs pred]
+  (->> (map (fn [x i] [x i]) xs (range))
+       (drop 1)
+       (drop-while (comp not pred first))
+       (first)
+       (second)))
+
+(defn do-step-1-dim [{:keys [ps vs]}]
+  (let [vs' (map (partial apply-gravity-1-dim ps) ps vs)]
+    {:ps (map + ps vs'), :vs vs'}))
+
+(defn find-period [state]
+  (let [start-pos (:ps state)] 
+    (iter-until (iterate do-step-1-dim state) (partial = state))))
+
+(defn split-by-dimensions [moons]
+  (map (fn [i]
+         {:vs (map #(nth (:vel %) i) moons)
+          :ps (map #(nth (:pos %) i) moons)})
+       (range 3)))
+
+(defn lcm [v]
+  (reduce (fn [agg n]
+            (/ (* agg n) (gcd agg n)))
+          v))
+
+(defn solve2
+  ([] (solve2 input))
+  ([moons] 
+    (->> moons 
+         (split-by-dimensions)
+         (map find-period)
+         (lcm)
+         )))
 
