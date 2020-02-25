@@ -2,6 +2,14 @@
   (:import (javax.swing JFrame WindowConstants)
            (java.awt Color)))
 
+(defn to-java-color [color]
+  ({:black (. Color BLACK)
+    :light-grey (. Color LIGHT_GRAY)
+    :green (. Color GREEN)
+    :red (. Color RED)
+    :yellow (. Color YELLOW)
+    :blue (. Color BLUE)} color))
+
 (defn- paint [dots {:keys [xmin xmax ymin ymax]} g]
   (let [r (.getClipBounds g)
         xa (.x r)
@@ -11,11 +19,10 @@
         qx (/ (- xb xa) (- xmax xmin))
         qy (/ (- yb ya) (- ymax ymin))]
     (doto g
-      (.setColor (. Color LIGHT_GRAY))
-      (.fillRect xa ya (.width r) (.height r))
-      (.setColor (. Color BLACK)))
-    (doseq [[[x y] color] dots  
-            :when (= color 1)]
+      (.setColor (. Color WHITE))
+      (.fillRect xa ya (.width r) (.height r)))
+    (doseq [[[x y] color] dots]
+      (.setColor g (to-java-color color))
       (.fillRect g (+ xa (* qx (- x xmin))) 
                    (+ ya (* qy (- y ymin)))
                    qx
