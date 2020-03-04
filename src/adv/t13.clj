@@ -116,11 +116,12 @@
 ;(def input [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99])
 
 (defn tile-id-color [id]
-  (get {0 :light-grey
-        1 :black
-        2 :blue
-        3 :green
-        4 :red} id :yellow))
+  (get {0 :light-grey ; an empty tile. No game object appears in this tile. 
+        1 :black      ; a wall tile. Walls are indestructible barriers.
+        2 :blue       ; a block tile. Blocks can be broken by the ball.
+        3 :green      ; a horizontal paddle tile. The paddle is indestructible.
+        4 :red        ; a ball tile. The ball moves diagonally and bounces off objects.
+        } id :yellow))
 
 (defn tiles-to-wall [tiles]
   (->> tiles
@@ -143,5 +144,7 @@
                 (partition 3)
                 (tiles-to-wall))
           bounds (rect-within wall)]
-       (show wall bounds))))    
+       (filter (fn [[p color]] (or (= color :blue) (= color :blue)))
+               wall)))) 
+       ;(show wall bounds))))    
 
