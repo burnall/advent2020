@@ -110,11 +110,6 @@
                (+ rel-base (get-param storage (inc pos) modes rel-base)))
       (throw (Exception. (str "unknown " op " "))))))
 
-;(def input [104,1125899906842624,99])
-;(def input [109 19 204 -15 99])
-;(def input [109 25 203 -25 70 4 0 99]) 
-;(def input [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99])
-
 (defn tile-id-color [id]
   (get {0 :light-grey ; an empty tile. No game object appears in this tile. 
         1 :black      ; a wall tile. Walls are indestructible barriers.
@@ -126,7 +121,7 @@
 (defn tiles-to-wall [tiles]
   (->> tiles
        (map (fn [[x y tile-id]] 
-              [[x y] (tile-id-color tile-id)]))
+              [[x y] tile-id]))
        (into {})))
        
 (defn rect-within [wall]
@@ -144,7 +139,7 @@
                 (partition 3)
                 (tiles-to-wall))
           bounds (rect-within wall)]
-       (filter (fn [[p color]] (or (= color :blue) (= color :blue)))
-               wall)))) 
-       ;(show wall bounds))))    
+       ;(filter (fn [[p color]] (or (= color :blue) (= color :blue)))
+       ;        wall)))) 
+       (show wall bounds tile-id-color))))    
 

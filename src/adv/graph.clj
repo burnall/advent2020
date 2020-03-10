@@ -10,7 +10,7 @@
     :yellow (. Color YELLOW)
     :blue (. Color BLUE)} color))
 
-(defn- paint [dots {:keys [xmin xmax ymin ymax]} g]
+(defn- paint [dots {:keys [xmin xmax ymin ymax]} get-color g]
   (let [r (.getClipBounds g)
         xa (.x r)
         ya (.y r)
@@ -22,15 +22,15 @@
       (.setColor (. Color WHITE))
       (.fillRect xa ya (.width r) (.height r)))
     (doseq [[[x y] color] dots]
-      (.setColor g (to-java-color color))
+      (.setColor g (to-java-color (get-color color)))
       (.fillRect g (+ xa (* qx (- x xmin))) 
                    (+ ya (* qy (- y ymin)))
                    qx
                    qy))))
 
-(defn show [dots bounds]
+(defn show [dots bounds get-color]
   (doto 
-    (proxy [JFrame] [] (paint [g] (paint dots bounds g)))
+    (proxy [JFrame] [] (paint [g] (paint dots bounds get-color g)))
     (.setSize 600 600)
     (.setLocationRelativeTo nil)
     (.setDefaultCloseOperation (WindowConstants/EXIT_ON_CLOSE))
