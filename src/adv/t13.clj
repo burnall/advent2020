@@ -66,48 +66,48 @@
            (if (pred a b) 1 0)
            rel-base)))
 
-(defn execute [storage pos outputs rel-base]
+(defn execute [storage pos rel-base get-input]
   (let [op (mod (storage pos) 100)
         modes (quot (storage pos) 100)]
     ;(println "[execute] pos:" pos "op:" op "modes" modes "rel-base" rel-base)
     (condp = op
-      99 outputs
+      99 {:halt true}
       1 (recur (run-binary-op storage pos + modes rel-base) 
                (+ pos 4) 
-               outputs 
-               rel-base)       
+               rel-base
+               get-input)       
       2 (recur (run-binary-op storage pos * modes rel-base) 
                (+ pos 4) 
-               outputs
-               rel-base)
-      ;3 (recur (store storage (inc pos) modes (robot) rel-base) 
-      ;           (+ pos 2) 
-      ;           robot
-      ;           rel-base)
-      4 (recur storage 
-               (+ pos 2)
-               (conj outputs (get-param storage (inc pos) modes rel-base))
-               rel-base) 
+               rel-base
+               get-input)
+      3 (recur (store storage (inc pos) modes (get-input) rel-base) 
+               (+ pos 2) 
+               rel-base
+               get-input)
+      4 {:storage storage
+         :pos (+ pos 2)
+         :out (get-param storage (inc pos) modes rel-base)
+         :rel-base rel-base} 
       5 (recur storage 
                (jump-if-next-pos true storage pos modes rel-base)
-               outputs
-               rel-base)
+               rel-base
+               get-input)
       6 (recur storage
                (jump-if-next-pos false storage pos modes rel-base)
-               outputs
-               rel-base)
+               rel-base
+               get-input)
       7 (recur (cond-store-data < storage pos modes rel-base)
                (+ pos 4)
-               outputs
-               rel-base)
+               rel-base
+               get-input)
       8 (recur (cond-store-data = storage pos modes rel-base)
                (+ pos 4)
-               outputs
-               rel-base)
+               rel-base
+               get-input)
       9 (recur storage
                (+ pos 2)
-               outputs
-               (+ rel-base (get-param storage (inc pos) modes rel-base)))
+               (+ rel-base (get-param storage (inc pos) modes rel-base))
+               get-input)
       (throw (Exception. (str "unknown " op " "))))))
 
 (defn tile-id-color [id]
@@ -131,15 +131,63 @@
      :ymin (dec (second (apply min-key second ps)))
      :ymax (inc (second (apply max-key second ps)))}))
 
+(defn collect-outputs [data]
+  (->> {:storage (storage data)
+        :pos 0
+        :out 0
+        :rel-base 0
+        :input nil}
+       (iterate (fn [{:keys [storage pos rel-base]}]
+                  (execute storage pos rel-base nil)))
+       (drop 1)
+       (take-while (complement :halt))
+       (map :out)))
+                  
+(defn get-wall [data]
+  (->> data
+       (collect-outputs)
+       (partition 3)
+       (tiles-to-wall)))
+
+(defn draw [data]
+  (let [wall (get-wall data)
+        bounds (rect-within wall)]
+    (show wall bounds tile-id-color)))
+
 (defn solve
   ([] (solve input)) 
   ([data] 
-    (let [wall 
-           (->> (execute (storage data) 0 [] 0)
-                (partition 3)
-                (tiles-to-wall))
-          bounds (rect-within wall)]
-       ;(filter (fn [[p color]] (or (= color :blue) (= color :blue)))
-       ;        wall)))) 
-       (show wall bounds tile-id-color))))    
+    (->> data
+         (get-wall) 
+         (filter (fn [[_ tile-id]] (= tile-id 2)))
+         (count))))
+
+(defn parse-output [output]
+  (let [triples (partition 3 output)
+        [paddle-x _ _] (last (filter #(= 3 (last %)) triples))
+        [ball-x _ _] (last (filter #(= 4 (last %)) triples))
+        scores (mapcat (fn [[x y i]] (when (and (= x -1) (= y 0)) [i])) triples)
+        has-blocks? (some #(= 2 (last %)) triples)]
+    {:paddle-x paddle-x 
+     :ball-x ball-x
+     :scores scores
+     :has-blocks? has-blocks?}))
+
+(defn play-round [storage input all-scores rel-base]
+  ;(prn 22 input all-scores)
+  (let [{new-storage :storage, out :outputs, new-rel-base :rel-base} (execute storage 0 [] rel-base input)
+        {:keys [ball-x paddle-x scores has-blocks?]} (parse-output out)]
+    out))
+    ;(println ball-x paddle-x scores has-blocks? new-rel-base)
+    ;(if has-blocks?
+    ;  (recur new-storage 
+    ;         (Integer/compare ball-x paddle-x)
+    ;         (concat all-scores scores)
+    ;         rel-base)
+    ;  (concat all-scores scores)))) 
+      
+(defn solve2
+  ([] (solve2 (assoc input 0 2)))
+  ([data] 
+    (play-round (storage data) 0 [] 0)))
 
