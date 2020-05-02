@@ -162,32 +162,35 @@
          (filter (fn [[_ tile-id]] (= tile-id 2)))
          (count))))
 
-(defn parse-output [output]
-  (let [triples (partition 3 output)
-        [paddle-x _ _] (last (filter #(= 3 (last %)) triples))
-        [ball-x _ _] (last (filter #(= 4 (last %)) triples))
-        scores (mapcat (fn [[x y i]] (when (and (= x -1) (= y 0)) [i])) triples)
-        has-blocks? (some #(= 2 (last %)) triples)]
-    {:paddle-x paddle-x 
-     :ball-x ball-x
-     :scores scores
-     :has-blocks? has-blocks?}))
+; Part 2
+(defn get-input [{:keys [ball-x paddle-x]}]
+  #(Integer/compare ball-x paddle-x))
 
-(defn play-round [storage input all-scores rel-base]
-  ;(prn 22 input all-scores)
-  (let [{new-storage :storage, out :outputs, new-rel-base :rel-base} (execute storage 0 [] rel-base input)
-        {:keys [ball-x paddle-x scores has-blocks?]} (parse-output out)]
-    out))
-    ;(println ball-x paddle-x scores has-blocks? new-rel-base)
-    ;(if has-blocks?
-    ;  (recur new-storage 
-    ;         (Integer/compare ball-x paddle-x)
-    ;         (concat all-scores scores)
-    ;         rel-base)
-    ;  (concat all-scores scores)))) 
-      
+(defn new-game-state [{nxt :nxt, :as game-state} out]
+  (cond
+    (> 2 (count nxt)) 
+      (assoc game-state :nxt (conj nxt out))
+    (= out 3) ;paddle
+      (merge game-state {:nxt [], :paddle-x (first nxt)}) 
+    (= out 4) ;ball
+      (merge game-state {:nxt [], :ball-x (first nxt)})
+    (= nxt [-1 0]) ;score
+      (merge game-state {:nxt [], :scores (conj (:scores game-state) out)}) 
+    :else (assoc game-state :nxt [])))
+
+; intcode-state - :storage :pos :out :rel-base
+; game-state - :nxt  :ball-x :paddle-x :scores
+(defn play-all [{:keys [storage pos rel-base]} 
+                game-state]
+  (let [next-intcode-state (execute storage pos rel-base (get-input game-state))]
+    (if 
+      (:halt next-intcode-state) (:scores game-state)
+      (recur next-intcode-state 
+             (new-game-state game-state (:out next-intcode-state))))))    
+
 (defn solve2
   ([] (solve2 (assoc input 0 2)))
   ([data] 
-    (play-round (storage data) 0 [] 0)))
+    (play-all {:storage (storage data), :pos 0, :rel-base 0} 
+              {:scores []})))
 
