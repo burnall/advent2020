@@ -72,7 +72,19 @@
       (:ore new-chemicals)
       (recur reactions new-chemicals ranks))))
 
-(defn solve []
-  (next-production input {:fuel 1} (build-ranks input)))
+(defn solve [fuel]
+  (next-production input {:fuel fuel} (build-ranks input)))
 
-              
+; f(a)<0 and f(b)>0 find x, so f(x)<=0 and f(x+1)>0. f - monotonously growing 
+(defn binary-search [f a b] 
+  (if (= (inc a) b)
+    a
+    (let [mid (quot (+ a b) 2)]
+      (if (> (f mid) 0)
+        (recur f a mid)
+        (recur f mid b)))))
+ 
+(defn solve2 [ore low high]
+  (letfn [(f [fuel] (- (solve fuel) ore))]
+    (binary-search f low high)))
+
